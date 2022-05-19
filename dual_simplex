@@ -1,0 +1,83 @@
+format short 
+clear all
+clc
+variables={'x_1','x_2','s_1','s_2','sol'};
+
+cost=[-3 -5 0 0 0];
+info=[-1 -3;-1 -1];
+b=[-3;-2];
+s=eye(size(info,1)); 
+A=[info s b];
+
+BV=[]
+
+for j=1:size(s,2)
+    for i=1:size(A,2)
+        if A(:,i)==s(:,j)
+            BV=[BV i];
+        end
+    end
+end
+
+display(BV)
+fprintf('Basic variables (BV) : ')
+display(variables(BV))
+
+% compute value of table:
+zjcj=cost(BV)*A-cost;
+
+% print table:
+zjcj=[zjcj;A];
+display(zjcj);
+
+% dual simplex method start:
+run=true;
+while run
+    solution=A(:,end);
+    if any(solution<0)
+        fprintf('The current bfs is not feasible \n');
+        [leaveVar,pvtRow]=min(solution);
+        fprintf('leaving row = %d \n',pvtRow)
+    
+        % find entering variable:
+        row=A(pvtRow,1:end-1);
+        zj=zjcj(:,1:end-1);
+    
+        for i=1:size(row,2)
+            if row(i)<0
+                ratio(i)=abs(zj(i)./row(i));
+            else
+                ratio(i)=inf;
+            end
+        end
+        [minVal,pvtCol]=min(ratio);
+        fprintf('entering variable = %d \n',pvtCol);
+    
+        % update the BV
+        BV(pvtRow)=pvtCol
+        fprintf('Basic variables (BV) : ')
+        display(variables(BV))
+    
+        pvtKey=A(pvtRow,pvtCol);
+        A(pvtRow,:)=A(pvtRow,:)./pvtKey;
+    
+        for i=1:size(A,1)
+            if i~=pvtRow
+                A(i,:)=A(i,:)-A(i,pvtCol).*A(pvtRow,:);
+            end
+        end
+        display(A)
+    
+        zjcj=cost(BV)*A-cost;
+        display(zjcj);
+    
+    else
+        run=false;
+        fprintf('The current bfs is feasible and optimal \n');
+    end
+end
+
+final_bfs=zeros(1,size(A,2));
+final_bfs(BV)=A(:,end);
+final_bfs(end)=sum(final_bfs.*cost);
+display(final_bfs)
