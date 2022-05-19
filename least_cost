@@ -1,0 +1,40 @@
+clc;
+format short;
+cost = [2 10 4 5 ; 6 12 8 11; 3 9 5 7];
+supply = [ 12 25 20 ] ;
+demand = [ 25 10 15 5 ] ;
+[m,n] = size(cost) ;
+if sum(demand)==sum(supply)
+fprintf('stable');
+elseif sum(supply) < sum(demand)
+fprintf('unstable');
+cost(end+1,:) = zeros(1,n);
+supply(end+1) = sum(demand)-sum(supply);
+disp('balanced');
+else
+fprintf('unstable \n')
+cost(:,end+1) = zeros(m,1);
+demand(end+1) = sum(supply)-sum(demand);
+disp('balanced')
+end
+X = zeros(m,n);
+icost = cost;
+while any(supply ~= 0) || any(demand ~= 0)
+mincost = min(cost(:));
+[r,c] = find(cost == min(mincost));
+y = min(supply(r),demand(c));
+[value,index] = max(y);
+pos_row = r(index);
+pos_col = c(index);
+X(pos_row,pos_col) = value;
+supply(pos_row) = supply(pos_row)-value;
+demand(pos_col) = demand(pos_col)-value;
+cost(pos_row,pos_col) = inf;
+end
+C = icost.*X;
+sum(sum(C))
+if nnz(X) == m+n-1
+disp('non degenrate solution');
+else
+disp('degenrate solution');
+end
